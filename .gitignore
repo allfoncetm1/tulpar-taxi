@@ -1,0 +1,40 @@
+# === Секреты ===
+.env
+.env.*
+!.env.example
+*.keystore
+*.jks
+tulpar-android/app/google-services.json
+MAPS.TXT
+
+# === Node ===
+node_modules/
+*.log
+dist/
+build/
+coverage/
+
+# === Android ===
+.gradle/
+.idea/
+local.properties
+captures/
+*.iml
+tulpar-android/app/build/
+tulpar-android/build/
+
+# === OS ===
+.DS_Store
+Thumbs.db
+
+# === Скриншоты / временные ===
+*.png
+!tulpar-android/app/src/main/res/**/*.png
+!logo/*.png
+
+# === Не публикуем ===
+sooncar apk zip/
+kz.internet_taxi_khromtau_*.apk
+kz.internet_taxi_khromtau_*.zip
+.claude/
+MAPS.TXT.example

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tulpar TAXI</string>
+    <string name="city_name">Қандыағаш</string>
+    <string name="tagline">Қандыағаштағы такси</string>
+    <string name="from_hint">Қайдан</string>
+    <string name="to_hint">Қайда</string>
+    <string name="order_taxi">Такси шақыру</string>
+    <string name="estimate_price">Бағаны есептеу</string>
+    <string name="profile">Профиль</string>
+    <string name="history">Тарих</string>
+    <string name="info">Анықтама</string>
+    <string name="driver_mode">Жүргізуші режимі</string>
+</resources>

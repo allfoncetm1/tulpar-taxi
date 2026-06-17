@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tulpar TAXI</string>
+    <string name="city_name">Кандыагаш</string>
+    <string name="tagline">Ваше такси в Кандыагаше</string>
+
+    <string name="from_hint">Откуда</string>
+    <string name="to_hint">Куда</string>
+    <string name="order_taxi">Заказать такси</string>
+    <string name="estimate_price">Рассчитать цену</string>
+    <string name="profile">Профиль</string>
+    <string name="history">История</string>
+    <string name="info">Справка</string>
+    <string name="driver_mode">Режим водителя</string>
+    <string name="map_loading">Загрузка карты…</string>
+    <string name="map_placeholder">Карта Кандыагаша\n(подключится к map.tulpartaxi.kz)</string>
+</resources>

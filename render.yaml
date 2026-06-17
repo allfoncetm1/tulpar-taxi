@@ -1,0 +1,49 @@
+databases:
+  - name: tulpar-db
+    plan: free
+    databaseName: tulpar_db
+    user: tulpar
+    region: frankfurt
+
+services:
+  # === Backend API (NestJS) ===
+  - type: web
+    name: tulpar-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: tulpar-api
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    healthCheckPath: /api/docs
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tulpar-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 30d
+      - key: SMS_PROVIDER
+        value: stub
+      - key: NODE_ENV
+        value: production
+      # FIREBASE_SERVICE_ACCOUNT — задать вручную в Dashboard (sync: false)
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+
+  # === Map server (Express) ===
+  - type: web
+    name: tulpar-map
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: tulpar-map
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /config
+    envVars:
+      # MAPBOX_TOKEN — задать вручную в Dashboard
+      - key: MAPBOX_TOKEN
+        sync: false
