@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tulpar TAXI</string>
+    <string name="city_name">Kandyagash</string>
+    <string name="tagline">Your taxi in Kandyagash</string>
+    <string name="from_hint">From</string>
+    <string name="to_hint">To</string>
+    <string name="order_taxi">Order taxi</string>
+    <string name="estimate_price">Estimate price</string>
+    <string name="profile">Profile</string>
+    <string name="history">History</string>
+    <string name="info">Help</string>
+    <string name="driver_mode">Driver mode</string>
+</resources>

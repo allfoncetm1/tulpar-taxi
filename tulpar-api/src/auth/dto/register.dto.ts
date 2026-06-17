@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumberString, IsOptional, IsString, Length } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumberString, IsOptional, IsString, Length } from 'class-validator';
 
 export class SendSmsDto {
   @ApiProperty({ example: '+77001234567' })
@@ -27,6 +27,11 @@ export class RegisterV2Dto {
 
   @ApiProperty({ example: 1 })
   cityId: number;
+
+  @ApiProperty({ example: false, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isDriver?: boolean;
 }
 
 export class RegisterWithTokenDto {

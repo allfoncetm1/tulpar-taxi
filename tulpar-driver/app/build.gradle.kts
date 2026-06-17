@@ -4,24 +4,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
-    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "kz.tulpartaxi.kandyagash"
+    namespace = "kz.tulpartaxi.driver"
     compileSdk = 34
 
-    signingConfigs {
-        create("release") {
-            storeFile = file("../tulpar-release.jks")
-            storePassword = "1996karasai"
-            keyAlias = "tulpar"
-            keyPassword = "1996karasai"
-        }
-    }
-
     defaultConfig {
-        applicationId = "kz.tulpartaxi.kandyagash"
+        applicationId = "kz.tulpartaxi.driver"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
@@ -41,7 +31,6 @@ android {
             buildConfigField("int", "DEFAULT_CITY_ID", "1")
         }
         release {
-            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -105,9 +94,6 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-
-    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
-    implementation("com.google.firebase:firebase-messaging")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")

@@ -43,6 +43,7 @@ export class AuthService {
 
     if (dto.name) user.name = dto.name;
     if (dto.cityId) user.cityId = dto.cityId;
+    if (dto.isDriver === true) user.isDriver = true;
     user.smsCode = null as unknown as string;
     user.smsCodeExpiresAt = null as unknown as Date;
 

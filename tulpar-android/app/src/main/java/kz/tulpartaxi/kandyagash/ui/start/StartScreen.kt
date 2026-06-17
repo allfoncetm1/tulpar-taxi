@@ -153,6 +153,17 @@ fun StartScreen(
                 onBack = viewModel::closeMap,
             )
         }
+
+        // Оценка водителя после завершения поездки
+        val ratingId = formState.ratingOrderId
+        if (formState.showRating && ratingId != null) {
+            BackHandler { viewModel.skipRating() }
+            RatingScreen(
+                orderId = ratingId,
+                onSubmit = viewModel::submitRating,
+                onSkip = viewModel::skipRating,
+            )
+        }
     }
 }
 

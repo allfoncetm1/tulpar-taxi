@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tulpar Водитель</string>
+    <string name="city_name">Кандыагаш</string>
+    <string name="tagline">Tulpar для водителей</string>
+
+    <string name="online">Онлайн</string>
+    <string name="offline">Оффлайн</string>
+    <string name="active_orders">Доступные заказы</string>
+    <string name="accept">Принять</string>
+    <string name="arrived">Я приехал</string>
+    <string name="start_trip">Начать поездку</string>
+    <string name="finish_trip">Завершить</string>
+    <string name="cancel_trip">Отменить</string>
+    <string name="balance">Баланс</string>
+    <string name="profile">Профиль</string>
+    <string name="map_loading">Загрузка карты…</string>
+    <string name="no_orders">Нет доступных заказов</string>
+</resources>
