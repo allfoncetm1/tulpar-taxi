@@ -514,7 +514,7 @@ private fun OrderBottomSheet(
             Text(
                 text = "Заказать поездку",
                 style = MaterialTheme.typography.titleLarge,
-                color = TulparBlack,
+                color = TulparWhite,
             )
 
             AddressTapField(
