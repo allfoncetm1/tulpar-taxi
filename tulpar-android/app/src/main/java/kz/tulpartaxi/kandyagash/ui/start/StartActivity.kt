@@ -1,11 +1,16 @@
 package kz.tulpartaxi.kandyagash.ui.start
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
@@ -24,9 +29,21 @@ class StartActivity : ComponentActivity() {
     @Inject lateinit var authRepository: AuthRepository
     @Inject lateinit var api: TulparApi
 
+    private lateinit var notificationPermissionLauncher: ActivityResultLauncher<String>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        notificationPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            if (granted) {
+                sendFcmTokenToServer()
+            } else {
+                sendFcmTokenToServer()
+            }
+        }
 
         if (!authRepository.isLoggedIn()) {
             startActivity(Intent(this, AuthActivity::class.java))
@@ -41,7 +58,21 @@ class StartActivity : ComponentActivity() {
             }
         }
 
-        sendFcmTokenToServer()
+        requestNotificationPermissionIfNeeded()
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionGranted = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+            if (permissionGranted) {
+                sendFcmTokenToServer()
+            } else {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            sendFcmTokenToServer()
+        }
     }
 
     private fun sendFcmTokenToServer() {

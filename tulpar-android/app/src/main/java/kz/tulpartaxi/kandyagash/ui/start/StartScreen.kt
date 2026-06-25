@@ -15,27 +15,20 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Button
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -46,6 +39,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +71,8 @@ fun StartScreen(
 
     val fusedLocation = remember { LocationServices.getFusedLocationProviderClient(context) }
     var pendingMapMode by remember { mutableStateOf<String?>(null) }
+    var locationPermissionDenied by remember { mutableStateOf(false) }
+    var deniedMapMode by remember { mutableStateOf<String?>(null) }
 
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -86,7 +82,8 @@ fun StartScreen(
             if (granted) {
                 openMapWithLocation(context, fusedLocation, mode, viewModel)
             } else {
-                if (mode == "from") viewModel.openMapForFrom() else viewModel.openMapForTo()
+                deniedMapMode = mode
+                locationPermissionDenied = true
             }
             pendingMapMode = null
         }
@@ -100,6 +97,18 @@ fun StartScreen(
             openMapWithLocation(context, fusedLocation, mode, viewModel)
         } else {
             pendingMapMode = mode
+            locationLauncher.launch(arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ))
+        }
+    }
+
+    fun retryPermissionRequest() {
+        deniedMapMode?.let {
+            pendingMapMode = it
+            deniedMapMode = null
+            locationPermissionDenied = false
             locationLauncher.launch(arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -124,6 +133,8 @@ fun StartScreen(
         )
     }
 
+    var mapLoadError by remember { mutableStateOf(false) }
+
     Box(modifier = Modifier.fillMaxSize().background(TulparBlack)) {
 
         // Основной экран с картой и панелью заказа
@@ -138,7 +149,31 @@ fun StartScreen(
             onProfile = { context.startActivity(Intent(context, ProfileActivity::class.java)) },
             onHistory = { context.startActivity(Intent(context, HistoryActivity::class.java)) },
             onInfo = { context.startActivity(Intent(context, InfoActivity::class.java)) },
+            mapLoadError = mapLoadError,
+            onMapLoadError = { mapLoadError = true },
+            onRetryMap = { mapLoadError = false },
         )
+
+        if (locationPermissionDenied) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { locationPermissionDenied = false },
+                title = { Text("Разрешение на геолокацию") },
+                text = { Text("Чтобы выбрать адрес на карте, разрешите доступ к геолокации.") },
+                confirmButton = {
+                    androidx.compose.material3.TextButton(onClick = { retryPermissionRequest() }) {
+                        Text("Разрешить")
+                    }
+                },
+                dismissButton = {
+                    androidx.compose.material3.TextButton(onClick = { locationPermissionDenied = false }) {
+                        Text("Отмена")
+                    }
+                },
+                containerColor = TulparSurface,
+                titleContentColor = TulparWhite,
+                textContentColor = TulparGray,
+            )
+        }
 
         // Полноэкранная карта для выбора точки
         val mapMode = formState.mapMode
@@ -179,6 +214,9 @@ private fun MainOrderView(
     onProfile: () -> Unit,
     onHistory: () -> Unit,
     onInfo: () -> Unit,
+    mapLoadError: Boolean,
+    onMapLoadError: () -> Unit,
+    onRetryMap: () -> Unit,
 ) {
     var mapLoaded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
@@ -188,35 +226,79 @@ private fun MainOrderView(
             url = "${StaticConfig.mapBaseUrl()}/citymap",
             modifier = Modifier.fillMaxSize(),
             onPageLoaded = { mapLoaded = true },
+            onError = onMapLoadError,
+            stateKey = if (mapLoadError) 1 else 0,
         )
 
-        // Топ-бар поверх карты
-        TopBar(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 48.dp, start = 16.dp, end = 16.dp),
-            onProfile = onProfile,
-            onHistory = onHistory,
-            onInfo = onInfo,
-        )
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopBar(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 48.dp, start = 16.dp, end = 16.dp),
+                onProfile = onProfile,
+                onHistory = onHistory,
+                onInfo = onInfo,
+            )
+            Spacer(modifier = Modifier.weight(1f))
+            OrderBottomSheet(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .imePadding(),
+                formState = formState,
+                onFromTap = onFromTap,
+                onToTap = onToTap,
+                onPriceChange = onPriceChange,
+                onDoorChange = onDoorChange,
+                onCommentChange = onCommentChange,
+                onOrder = onOrder,
+            )
+        }
 
-        // Нижняя панель заказа
-        OrderBottomSheet(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .imePadding(),
-            formState = formState,
-            onFromTap = onFromTap,
-            onToTap = onToTap,
-            onPriceChange = onPriceChange,
-            onDoorChange = onDoorChange,
-            onCommentChange = onCommentChange,
-            onOrder = onOrder,
-        )
+        if (mapLoadError) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(TulparBlack.copy(alpha = 0.82f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(TulparSurface)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        "Не удалось загрузить карту",
+                        color = TulparWhite,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Проверьте интернет-соединение и попробуйте ещё раз.",
+                        color = TulparGray,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick = {
+                            onRetryMap()
+                            mapLoaded = false
+                        },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = TulparLime, contentColor = TulparOnLime),
+                        modifier = Modifier.fillMaxWidth(0.66f),
+                    ) {
+                        Text("Повторить", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
 
-        // Поверх всего: загрузочный экран пока карта не готова
-        if (!mapLoaded) {
+        if (!mapLoaded && !mapLoadError) {
             LoadingScreen()
         }
     }
@@ -267,7 +349,10 @@ private fun TopBar(
     onInfo: () -> Unit,
 ) {
     Row(
-        modifier = modifier,
+        modifier = modifier
+            .clip(RoundedCornerShape(22.dp))
+            .background(TulparSurface.copy(alpha = 0.92f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -284,26 +369,58 @@ private fun TopBar(
             }
         }
 
-        Row {
-            TopBarIcon(onClick = onProfile) { Icon(Icons.Default.Person, contentDescription = null, tint = TulparWhite, modifier = Modifier.size(20.dp)) }
-            Spacer(Modifier.width(8.dp))
-            TopBarIcon(onClick = onHistory) { Icon(Icons.Default.History, contentDescription = null, tint = TulparWhite, modifier = Modifier.size(20.dp)) }
-            Spacer(Modifier.width(8.dp))
-            TopBarIcon(onClick = onInfo) { Icon(Icons.Default.Info, contentDescription = null, tint = TulparWhite, modifier = Modifier.size(20.dp)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TopBarIcon(onClick = onProfile) {
+                Icon(Icons.Default.Person, contentDescription = "Профиль", tint = TulparWhite, modifier = Modifier.size(20.dp))
+            }
+            TopBarIcon(onClick = onHistory, background = TulparLime) {
+                Icon(Icons.Default.History, contentDescription = "История", tint = TulparBlack, modifier = Modifier.size(20.dp))
+            }
+            TopBarIcon(onClick = onInfo) {
+                Icon(Icons.Default.Info, contentDescription = "Информация", tint = TulparWhite, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
 
 @Composable
-private fun TopBarIcon(onClick: () -> Unit, content: @Composable () -> Unit) {
+private fun TopBarIcon(
+    onClick: () -> Unit,
+    background: Color = TulparSurface.copy(alpha = 0.85f),
+    content: @Composable () -> Unit,
+) {
     Box(
         modifier = Modifier
-            .size(36.dp)
+            .size(40.dp)
             .clip(CircleShape)
-            .background(TulparSurface.copy(alpha = 0.85f)),
+            .background(background),
         contentAlignment = Alignment.Center,
     ) {
-        IconButton(onClick = onClick, modifier = Modifier.size(36.dp)) { content() }
+        IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) { content() }
+    }
+}
+
+@Composable
+private fun QuickActionButton(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    label: String,
+    iconTint: Color = TulparBlack,
+    onClick: () -> Unit,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(48.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = TulparSurface2,
+            contentColor = TulparBlack,
+        ),
+        contentPadding = PaddingValues(horizontal = 10.dp),
+    ) {
+        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = iconTint)
+        Spacer(Modifier.width(8.dp))
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -320,84 +437,232 @@ private fun OrderBottomSheet(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
             .background(TulparSurface)
-            .padding(horizontal = 20.dp, vertical = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Ручка
-        Box(
-            modifier = Modifier
-                .width(40.dp)
-                .height(4.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(TulparGrayLight)
-                .align(Alignment.CenterHorizontally),
-        )
-
-        // Откуда
-        AddressTapField(value = formState.fromAddress, placeholder = "Откуда", dotColor = TulparLime, onTap = onFromTap)
-
-        Box(modifier = Modifier.padding(start = 22.dp).fillMaxWidth().height(1.dp).background(TulparGrayLight))
-
-        // Куда
-        AddressTapField(value = formState.toAddress, placeholder = "Куда", dotColor = TulparWhite, onTap = onToTap)
-
-        Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(TulparGrayLight))
-
-        // Подъезд
-        if (formState.fromAddress.isNotBlank()) {
-            SimpleInputField(
-                value = formState.door,
-                onValueChange = onDoorChange,
-                placeholder = "Подъезд / квартира (необяз.)",
-                icon = Icons.Default.LocationOn,
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(64.dp)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(TulparGrayLight),
             )
         }
 
-        // Комментарий
-        SimpleInputField(
-            value = formState.comment,
-            onValueChange = onCommentChange,
-            placeholder = "Комментарий водителю (необяз.)",
-            icon = Icons.Default.Info,
-        )
+        if (formState.isOrdering) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .background(TulparLime.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(58.dp)
+                            .clip(CircleShape)
+                            .background(TulparLime),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.logo_nontext),
+                            contentDescription = null,
+                            modifier = Modifier.size(34.dp),
+                        )
+                    }
+                }
 
-        // Поле цены
-        PriceInputField(
-            value = formState.offeredPrice,
-            onValueChange = onPriceChange,
-        )
+                Text(
+                    text = "Ищем ближайшего водителя…",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TulparBlack,
+                )
+                Text(
+                    text = "${formState.toAddress.ifBlank { "—" }} · ${formState.offeredPrice.ifBlank { "0 ₸" }}",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TulparGray,
+                )
 
-        if (formState.error != null) {
-            Text(formState.error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-        }
+                Button(
+                    onClick = { /* Отмена поиска */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = TulparSurface2,
+                        contentColor = TulparGray,
+                    ),
+                ) {
+                    Text("Отменить заказ", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                }
+            }
+        } else {
+            Text(
+                text = "Заказать поездку",
+                style = MaterialTheme.typography.titleLarge,
+                color = TulparBlack,
+            )
 
-        // Кнопка заказа
-        Button(
-            onClick = onOrder,
-            enabled = !formState.isOrdering &&
-                formState.fromAddress.isNotBlank() &&
-                formState.toAddress.isNotBlank() &&
-                formState.offeredPrice.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = TulparLime,
-                contentColor = TulparOnLime,
-                disabledContainerColor = TulparGrayLight,
-                disabledContentColor = TulparGray,
-            ),
-        ) {
-            if (formState.isOrdering) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = TulparOnLime, strokeWidth = 2.dp)
-            } else {
-                Text("Заказать такси", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            AddressTapField(
+                value = formState.fromAddress,
+                placeholder = "Откуда",
+                dotColor = TulparLime,
+                onTap = onFromTap,
+            )
+            Spacer(Modifier.height(12.dp))
+            AddressTapField(
+                value = formState.toAddress,
+                placeholder = "Куда",
+                dotColor = TulparWhite,
+                onTap = onToTap,
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Home,
+                    label = "Дом",
+                    iconTint = TulparLime,
+                    onClick = onFromTap,
+                )
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Work,
+                    label = "Работа",
+                    iconTint = TulparLime,
+                    onClick = onFromTap,
+                )
+                QuickActionButton(
+                    modifier = Modifier.weight(1f),
+                    icon = Icons.Default.Flight,
+                    label = "Порт",
+                    iconTint = TulparLime,
+                    onClick = onFromTap,
+                )
+            }
+
+            SimpleInputField(
+                value = formState.door,
+                onValueChange = onDoorChange,
+                placeholder = "Подъезд",
+                icon = Icons.Default.LocationOn,
+                textColor = TulparBlack,
+                placeholderColor = TulparGray,
+                backgroundColor = TulparSurface2,
+            )
+
+            SimpleInputField(
+                value = formState.comment,
+                onValueChange = onCommentChange,
+                placeholder = "Комментарий водителю",
+                icon = Icons.Default.Info,
+                textColor = TulparBlack,
+                placeholderColor = TulparGray,
+                backgroundColor = TulparSurface2,
+            )
+
+            PriceInputField(
+                value = formState.offeredPrice,
+                onValueChange = onPriceChange,
+                hasDestination = formState.toAddress.isNotBlank(),
+            )
+
+            if (formState.error != null) {
+                Text(formState.error, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+            }
+
+            Button(
+                onClick = onOrder,
+                enabled = !formState.isOrdering &&
+                    formState.fromAddress.isNotBlank() &&
+                    formState.toAddress.isNotBlank() &&
+                    formState.offeredPrice.isNotBlank(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(20.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TulparLime,
+                    contentColor = TulparOnLime,
+                    disabledContainerColor = TulparGrayLight,
+                    disabledContentColor = TulparGray,
+                ),
+            ) {
+                Text("Заказать", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
 
         Spacer(Modifier.height(4.dp))
+    }
+}
+
+@Composable
+private fun OrderCardItem(
+    modifier: Modifier = Modifier,
+    title: String,
+    value: String,
+    dotColor: androidx.compose.ui.graphics.Color,
+    onTap: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(TulparSurface2)
+            .clickable(onClick = onTap)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(dotColor),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(title, color = TulparGray, fontSize = 13.sp)
+        }
+        Text(value, color = TulparBlack, fontSize = 16.sp, fontWeight = FontWeight.Medium, maxLines = 2)
+    }
+}
+
+@Composable
+private fun CompactInfoCard(
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    text: String,
+    value: String,
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(TulparSurface2)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = TulparLime, modifier = Modifier.size(20.dp))
+        Column {
+            Text(text, color = TulparGray, fontSize = 12.sp)
+            Text(value, color = TulparBlack, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
     }
 }
 
@@ -408,33 +673,36 @@ private fun SimpleInputField(
     placeholder: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     keyboardType: androidx.compose.ui.text.input.KeyboardType = androidx.compose.ui.text.input.KeyboardType.Text,
+    textColor: androidx.compose.ui.graphics.Color = TulparWhite,
+    placeholderColor: androidx.compose.ui.graphics.Color = TulparGray,
+    backgroundColor: androidx.compose.ui.graphics.Color = TulparSurface2,
 ) {
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(TulparSurface2),
+            .height(52.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp),
+            modifier = Modifier.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(imageVector = icon, contentDescription = null, tint = TulparGray, modifier = Modifier.size(18.dp))
+            Icon(imageVector = icon, contentDescription = null, tint = TulparGray, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(10.dp))
             androidx.compose.foundation.text.BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
-                textStyle = androidx.compose.ui.text.TextStyle(color = TulparWhite, fontSize = 14.sp),
+                textStyle = androidx.compose.ui.text.TextStyle(color = textColor, fontSize = 14.sp),
                 cursorBrush = androidx.compose.ui.graphics.SolidColor(TulparLime),
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                     keyboardType = keyboardType,
                     imeAction = androidx.compose.ui.text.input.ImeAction.Next,
                 ),
                 decorationBox = { inner ->
-                    if (value.isBlank()) Text(placeholder, color = TulparGray, fontSize = 14.sp)
+                    if (value.isBlank()) Text(placeholder, color = placeholderColor, fontSize = 14.sp)
                     inner()
                 },
             )
@@ -443,29 +711,31 @@ private fun SimpleInputField(
 }
 
 @Composable
-private fun PriceInputField(value: String, onValueChange: (String) -> Unit) {
+private fun PriceInputField(value: String, onValueChange: (String) -> Unit, hasDestination: Boolean) {
     androidx.compose.foundation.layout.Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(TulparSurface2),
-        contentAlignment = Alignment.CenterStart,
+            .clip(RoundedCornerShape(16.dp))
+            .background(TulparSurface2)
+            .padding(14.dp),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Иконка монеты
-            Text("₸", fontSize = 22.sp, fontWeight = FontWeight.Bold,
-                color = if (value.isBlank()) TulparGray else TulparLime)
-            Spacer(Modifier.width(10.dp))
+            Text(
+                "₸",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = if (value.isBlank()) TulparGray else TulparLime,
+            )
+            Spacer(Modifier.width(12.dp))
             androidx.compose.foundation.text.BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
                 textStyle = androidx.compose.ui.text.TextStyle(
-                    color = TulparWhite,
+                    color = TulparBlack,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                 ),
@@ -481,8 +751,21 @@ private fun PriceInputField(value: String, onValueChange: (String) -> Unit) {
                     inner()
                 },
             )
-            if (value.isNotBlank()) {
-                Text(" ₸", fontSize = 16.sp, color = TulparGray)
+            if (hasDestination) {
+                Spacer(Modifier.width(12.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(TulparLime.copy(alpha = 0.16f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        "рекомендуем",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TulparBlack,
+                    )
+                }
             }
         }
     }
@@ -498,21 +781,22 @@ private fun AddressTapField(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(16.dp))
+            .background(TulparSurface2)
             .clickable(onClick = onTap)
-            .padding(vertical = 10.dp, horizontal = 4.dp),
+            .padding(vertical = 14.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(10.dp)
+                .size(12.dp)
                 .clip(CircleShape)
                 .background(dotColor),
         )
-        Spacer(Modifier.width(12.dp))
+        Spacer(Modifier.width(14.dp))
         Text(
             text = value.ifBlank { placeholder },
-            color = if (value.isBlank()) TulparGray else TulparWhite,
+            color = if (value.isBlank()) TulparGray else TulparBlack,
             fontSize = 15.sp,
             fontWeight = if (value.isBlank()) FontWeight.Normal else FontWeight.Medium,
             modifier = Modifier.weight(1f),
@@ -522,7 +806,7 @@ private fun AddressTapField(
             imageVector = Icons.Default.LocationOn,
             contentDescription = null,
             tint = TulparGray,
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier.size(20.dp),
         )
     }
 }

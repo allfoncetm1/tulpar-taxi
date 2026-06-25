@@ -5,6 +5,8 @@
 *.keystore
 *.jks
 tulpar-android/app/google-services.json
+tulpar-driver/app/google-services.json
+tulpar-android/build-output.txt
 MAPS.TXT
 
 # === Node ===

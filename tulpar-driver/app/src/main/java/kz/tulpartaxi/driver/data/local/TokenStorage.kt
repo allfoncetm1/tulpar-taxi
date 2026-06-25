@@ -38,6 +38,10 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
         get() = prefs.getString(KEY_USER_NAME, null)
         set(value) = prefs.edit().putString(KEY_USER_NAME, value).apply()
 
+    var deviceId: String?
+        get() = prefs.getString(KEY_DEVICE_ID, null)
+        set(value) = prefs.edit().putString(KEY_DEVICE_ID, value).apply()
+
     val isLoggedIn: Boolean get() = token != null
 
     fun clear() {
@@ -49,5 +53,6 @@ class TokenStorage @Inject constructor(@ApplicationContext context: Context) {
         private const val KEY_PHONE = "phone"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USER_NAME = "user_name"
+        private const val KEY_DEVICE_ID = "device_id"
     }
 }
