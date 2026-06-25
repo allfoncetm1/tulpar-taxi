@@ -53,7 +53,7 @@ class StartActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            TulparTaxiTheme(darkTheme = false) {
+            TulparTaxiTheme(darkTheme = true) {
                 StartScreen()
             }
         }

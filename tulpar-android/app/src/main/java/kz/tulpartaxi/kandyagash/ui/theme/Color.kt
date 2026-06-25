@@ -2,20 +2,47 @@ package kz.tulpartaxi.kandyagash.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Основные цвета бренда
-val TulparLime = Color(0xFFCCFF00)         // Лайм из логотипа
-val TulparBlack = Color(0xFFF5F5F5)        // Светлый фон
-val TulparSurface = Color(0xFFFFFFFF)      // Карточки / поля
-val TulparSurface2 = Color(0xFFF0F0F0)     // Поля ввода
-val TulparWhite = Color(0xFF1A1A1A)        // Основной текст (тёмный)
-val TulparGray = Color(0xFF888888)         // Подсказки, неактивные
-val TulparGrayLight = Color(0xFFE0E0E0)    // Границы полей
-val TulparOnLime = Color(0xFF0D0D0D)       // Текст на лаймовой кнопке
+// Lime accent — same in dark/light
+val TulparLime = Color(0xFFDCFB3D)
+val TulparOnLime = Color(0xFF16170C)
 
-// Совместимость (старые ссылки → новые)
+// Light theme tokens
+val LightBg = Color(0xFFF1F1EE)
+val LightBg2 = Color(0xFFE7E7E1)
+val LightSurface = Color(0xFFFFFFFF)
+val LightFg = Color(0xFF15150F)
+val LightFg2 = Color(0xFF6E6E66)
+val LightFg3 = Color(0xFFAEAEA4)
+val LightLine = Color(0xFFECECE6)
+val LightField = Color(0xFFF1F1EC)
+val LightLimeDeep = Color(0xFF9DBF00)
+val LightLimeGlow = Color(0x47DCFB3D) // ~28% alpha
+
+// Dark theme tokens
+val DarkBg = Color(0xFF0C0E08)
+val DarkBg2 = Color(0xFF0A0B06)
+val DarkSurface = Color(0xFF15180E)
+val DarkFg = Color(0xFFF2F4E8)
+val DarkFg2 = Color(0xFF9A9D8C)
+val DarkFg3 = Color(0xFF62655A)
+val DarkLine = Color(0xFF272B1B)
+val DarkField = Color(0xFF1E2214)
+val DarkLimeDeep = TulparLime
+val DarkLimeGlow = Color(0x29DCFB3D) // ~16% alpha
+
+val TulparError = Color(0xFFE5604D)
+
+// Legacy aliases — point at dark tokens since app defaults to dark theme.
+// New screens use TulparTheme.colors and respect the active theme.
+val TulparBlack = DarkBg
+val TulparSurface = DarkSurface
+val TulparSurface2 = DarkField
+val TulparWhite = DarkFg
+val TulparGray = DarkFg2
+val TulparGrayLight = DarkLine
 val TulparOrange = TulparLime
-val TulparDark = TulparBlack
-val TulparDarkSurface = TulparSurface
-val TulparLight = Color(0xFFF5F5F5)
-val TulparOnDark = TulparWhite
+val TulparDark = DarkBg
+val TulparDarkSurface = DarkSurface
+val TulparLight = DarkBg
+val TulparOnDark = DarkFg
 val TulparOnOrange = TulparOnLime
