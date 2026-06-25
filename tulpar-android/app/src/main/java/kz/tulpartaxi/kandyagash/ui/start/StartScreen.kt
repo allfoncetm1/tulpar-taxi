@@ -20,13 +20,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Flight
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.Button
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.ButtonDefaults
@@ -221,10 +218,10 @@ private fun MainOrderView(
     var mapLoaded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Фоновая карта
+        // Фоновая карта — отступ под status bar, чтобы кнопки карты не уходили под него
         MapWebView(
             url = "${StaticConfig.mapBaseUrl()}/citymap",
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
             onPageLoaded = { mapLoaded = true },
             onError = onMapLoadError,
             stateKey = if (mapLoadError) 1 else 0,
@@ -299,7 +296,7 @@ private fun MainOrderView(
         }
 
         if (!mapLoaded && !mapLoadError) {
-            LoadingScreen()
+            SplashScreen()
         }
     }
 }
@@ -401,30 +398,6 @@ private fun TopBarIcon(
 }
 
 @Composable
-private fun QuickActionButton(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    iconTint: Color = TulparBlack,
-    onClick: () -> Unit,
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier.height(48.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = TulparSurface2,
-            contentColor = TulparBlack,
-        ),
-        contentPadding = PaddingValues(horizontal = 10.dp),
-    ) {
-        Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = iconTint)
-        Spacer(Modifier.width(8.dp))
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-    }
-}
-
-@Composable
 private fun OrderBottomSheet(
     modifier: Modifier = Modifier,
     formState: OrderFormState,
@@ -514,7 +487,7 @@ private fun OrderBottomSheet(
             Text(
                 text = "Заказать поездку",
                 style = MaterialTheme.typography.titleLarge,
-                color = TulparBlack,
+                color = TulparWhite,
             )
 
             AddressTapField(
@@ -530,33 +503,6 @@ private fun OrderBottomSheet(
                 dotColor = TulparWhite,
                 onTap = onToTap,
             )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                QuickActionButton(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Home,
-                    label = "Дом",
-                    iconTint = TulparLime,
-                    onClick = onFromTap,
-                )
-                QuickActionButton(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Work,
-                    label = "Работа",
-                    iconTint = TulparLime,
-                    onClick = onFromTap,
-                )
-                QuickActionButton(
-                    modifier = Modifier.weight(1f),
-                    icon = Icons.Default.Flight,
-                    label = "Порт",
-                    iconTint = TulparLime,
-                    onClick = onFromTap,
-                )
-            }
 
             SimpleInputField(
                 value = formState.door,
