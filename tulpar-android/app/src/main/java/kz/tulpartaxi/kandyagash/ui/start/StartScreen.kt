@@ -218,10 +218,10 @@ private fun MainOrderView(
     var mapLoaded by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Фоновая карта
+        // Фоновая карта — отступ под status bar, чтобы кнопки карты не уходили под него
         MapWebView(
             url = "${StaticConfig.mapBaseUrl()}/citymap",
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
             onPageLoaded = { mapLoaded = true },
             onError = onMapLoadError,
             stateKey = if (mapLoadError) 1 else 0,
