@@ -16,7 +16,7 @@ class AuthActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TulparTaxiTheme(darkTheme = false) {
+            TulparTaxiTheme(darkTheme = true) {
                 AuthScreen(
                     onSuccess = {
                         startActivity(Intent(this, StartActivity::class.java))
