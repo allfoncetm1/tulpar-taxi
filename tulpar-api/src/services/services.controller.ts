@@ -88,6 +88,18 @@ export class ServicesController {
     return this.svc.rateOrder(req.user.id, body.orderId, body.rating);
   }
 
+  @Post('GetMyActiveOrder')
+  @ApiOperation({ summary: 'Текущий активный заказ клиента (со статусом и инфой водителя)' })
+  getMyActiveOrder(@Request() req) {
+    return this.svc.getMyActiveOrder(req.user.id);
+  }
+
+  @Post('CancelMyOrder')
+  @ApiOperation({ summary: 'Отменить свой активный заказ (клиент)' })
+  cancelMyOrder(@Request() req, @Body() body: { orderId: string }) {
+    return this.svc.cancelMyOrder(req.user.id, body.orderId);
+  }
+
   @Post('checkPoint')
   @ApiOperation({ summary: 'Проверить, находится ли точка в зоне города' })
   checkPoint(@Body() body: { lat: number; lng: number }) {

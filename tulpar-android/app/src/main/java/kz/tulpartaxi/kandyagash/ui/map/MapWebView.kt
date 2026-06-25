@@ -21,8 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "MissingPermission")
 @Composable
 fun MapWebView(
     url: String,
@@ -30,11 +32,12 @@ fun MapWebView(
     onPointSelected: (mode: String, lat: Double, lng: Double, address: String) -> Unit = { _, _, _, _ -> },
     onPageLoaded: () -> Unit = {},
     onError: () -> Unit = {},
+    stateKey: Int = 0,
 ) {
     val context = LocalContext.current
     val mainHandler = remember { Handler(Looper.getMainLooper()) }
 
-    val webView = remember {
+    val webView = remember(stateKey) {
         WebView(context).apply {
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
@@ -84,6 +87,17 @@ fun MapWebView(
                 TulparBridge(
                     onPointSelected = { mode, lat, lng, address ->
                         mainHandler.post { onPointSelected(mode, lat, lng, address) }
+                    },
+                    onRequestLocation = {
+                        val fusedLocation = LocationServices.getFusedLocationProviderClient(context)
+                        fusedLocation.lastLocation
+                            .addOnSuccessListener { loc ->
+                                if (loc != null) {
+                                    val js = "window.applyLocation(${loc.latitude}, ${loc.longitude}, true);"
+                                    mainHandler.post { evaluateJavascript(js, null) }
+                                }
+                            }
+                            .addOnFailureListener { }
                     },
                 ),
                 "TulparBridge",

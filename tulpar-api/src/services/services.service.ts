@@ -186,6 +186,72 @@ export class ServicesService {
     return { success: true };
   }
 
+  async getMyActiveOrder(clientId: string) {
+    const order = await this.orderRepo.findOne({
+      where: [
+        { clientId, status: OrderStatus.NEW },
+        { clientId, status: OrderStatus.ACCEPTED },
+        { clientId, status: OrderStatus.ARRIVED },
+        { clientId, status: OrderStatus.IN_PROGRESS },
+      ],
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!order) return { active: false };
+
+    let driver: {
+      name: string | null; phone: string;
+      carModel?: string; carNumber?: string; carColor?: string;
+      lat?: number; lng?: number;
+    } | null = null;
+    if (order.driverId) {
+      const user = await this.userRepo.findOne({ where: { id: order.driverId } });
+      const driverInfo = await this.driverRepo.findOne({ where: { userId: order.driverId } });
+      if (user) {
+        driver = {
+          name: user.name,
+          phone: user.phone,
+          carModel: driverInfo?.carModel,
+          carNumber: driverInfo?.carNumber,
+          carColor: driverInfo?.carColor,
+          lat: driverInfo?.lastLat ? +driverInfo.lastLat : undefined,
+          lng: driverInfo?.lastLng ? +driverInfo.lastLng : undefined,
+        };
+      }
+    }
+
+    return {
+      active: true,
+      orderId: order.id,
+      status: order.status,
+      fromAddress: order.fromAddress,
+      toAddress: order.toAddress,
+      estimatedPrice: order.estimatedPrice,
+      driver,
+    };
+  }
+
+  async cancelMyOrder(clientId: string, orderId: string) {
+    const order = await this.findOrder(orderId);
+    if (order.clientId !== clientId) throw new BadRequestException('Это не ваш заказ');
+    if (order.status === OrderStatus.COMPLETED || order.status === OrderStatus.CANCELLED) {
+      throw new BadRequestException('Заказ уже завершён или отменён');
+    }
+    order.status = OrderStatus.CANCELLED;
+    await this.orderRepo.save(order);
+
+    if (order.driverId) {
+      const driverUser = await this.userRepo.findOne({ where: { id: order.driverId } });
+      if (driverUser?.firebaseToken) {
+        await this.fcm.sendToToken(driverUser.firebaseToken, 'Клиент отменил заказ', 'Заказ снят. Ждите новый.');
+      }
+      const driver = await this.driverRepo.findOne({ where: { userId: order.driverId } });
+      if (driver) { driver.status = DriverStatus.ONLINE; await this.driverRepo.save(driver); }
+    }
+
+    return { success: true };
+  }
+
   async rateOrder(clientId: string, orderId: string, rating: number) {
     if (rating < 1 || rating > 5) throw new BadRequestException('Оценка должна быть от 1 до 5');
     const order = await this.findOrder(orderId);

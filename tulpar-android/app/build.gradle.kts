@@ -37,7 +37,7 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000\"")
-            buildConfigField("String", "MAP_BASE_URL", "\"http://10.0.2.2:4000\"")
+            buildConfigField("String", "MAP_BASE_URL", "\"https://map.tulpar.space\"")
             buildConfigField("int", "DEFAULT_CITY_ID", "1")
         }
         release {
