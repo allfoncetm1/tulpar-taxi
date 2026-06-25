@@ -11,14 +11,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.google.firebase.messaging.FirebaseMessaging
-import kotlinx.coroutines.delay
 import dagger.hilt.android.AndroidEntryPoint
 import kz.tulpartaxi.kandyagash.data.api.TulparApi
 import kz.tulpartaxi.kandyagash.data.repository.AuthRepository
@@ -59,13 +53,8 @@ class StartActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            TulparTaxiTheme(darkTheme = false) {
-                var splashDone by remember { mutableStateOf(false) }
-                LaunchedEffect(Unit) {
-                    delay(1400)
-                    splashDone = true
-                }
-                if (splashDone) StartScreen() else SplashScreen()
+            TulparTaxiTheme(darkTheme = true) {
+                StartScreen()
             }
         }
 

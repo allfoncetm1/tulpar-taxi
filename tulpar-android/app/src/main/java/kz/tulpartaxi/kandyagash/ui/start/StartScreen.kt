@@ -299,7 +299,7 @@ private fun MainOrderView(
         }
 
         if (!mapLoaded && !mapLoadError) {
-            LoadingScreen()
+            SplashScreen()
         }
     }
 }

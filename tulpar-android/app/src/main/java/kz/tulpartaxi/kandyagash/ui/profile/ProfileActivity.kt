@@ -15,7 +15,7 @@ class ProfileActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            TulparTaxiTheme(darkTheme = false) {
+            TulparTaxiTheme(darkTheme = true) {
                 ProfileScreen(onBack = { finish() })
             }
         }
