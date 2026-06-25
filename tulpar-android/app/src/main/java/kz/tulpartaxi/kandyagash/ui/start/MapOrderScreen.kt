@@ -54,7 +54,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kz.tulpartaxi.kandyagash.R
+import kz.tulpartaxi.kandyagash.ui.map.MapWebView
 import kz.tulpartaxi.kandyagash.ui.theme.TulparTheme
+import kz.tulpartaxi.kandyagash.utils.StaticConfig
 
 private data class QuickAddress(val name: String, val addr: String, val price: String)
 
@@ -72,7 +74,14 @@ fun MapOrderScreen(
     var ordering by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize().background(colors.bg2)) {
-        if (mapContent != null) mapContent() else MapPlaceholder()
+        if (mapContent != null) {
+            mapContent()
+        } else {
+            MapWebView(
+                url = "${StaticConfig.mapBaseUrl()}/citymap",
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
 
         CenterPin(visible = !ordering)
 
@@ -105,12 +114,6 @@ fun MapOrderScreen(
             }
         }
     }
-}
-
-@Composable
-private fun MapPlaceholder() {
-    val colors = TulparTheme.colors
-    Box(modifier = Modifier.fillMaxSize().background(colors.bg2))
 }
 
 @Composable
