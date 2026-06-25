@@ -90,11 +90,18 @@ fun MapWebView(
                     },
                     onRequestLocation = {
                         val fusedLocation = LocationServices.getFusedLocationProviderClient(context)
+                        fun apply(lat: Double, lng: Double) {
+                            val js = "window.applyLocation($lat, $lng, true);"
+                            mainHandler.post { evaluateJavascript(js, null) }
+                        }
                         fusedLocation.lastLocation
                             .addOnSuccessListener { loc ->
                                 if (loc != null) {
-                                    val js = "window.applyLocation(${loc.latitude}, ${loc.longitude}, true);"
-                                    mainHandler.post { evaluateJavascript(js, null) }
+                                    apply(loc.latitude, loc.longitude)
+                                } else {
+                                    // нет свежего фикса — запрашиваем актуальную позицию
+                                    fusedLocation.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                                        .addOnSuccessListener { fresh -> fresh?.let { apply(it.latitude, it.longitude) } }
                                 }
                             }
                             .addOnFailureListener { }
