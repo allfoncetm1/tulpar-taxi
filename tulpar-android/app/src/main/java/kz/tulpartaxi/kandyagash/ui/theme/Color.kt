@@ -32,16 +32,17 @@ val DarkLimeGlow = Color(0x29DCFB3D) // ~16% alpha
 
 val TulparError = Color(0xFFE5604D)
 
-// Legacy aliases (kept so existing screens still compile)
-val TulparBlack = LightBg
-val TulparSurface = LightSurface
-val TulparSurface2 = LightField
-val TulparWhite = LightFg
-val TulparGray = LightFg2
-val TulparGrayLight = LightLine
+// Legacy aliases — point at dark tokens since app defaults to dark theme.
+// New screens use TulparTheme.colors and respect the active theme.
+val TulparBlack = DarkBg
+val TulparSurface = DarkSurface
+val TulparSurface2 = DarkField
+val TulparWhite = DarkFg
+val TulparGray = DarkFg2
+val TulparGrayLight = DarkLine
 val TulparOrange = TulparLime
-val TulparDark = LightBg
-val TulparDarkSurface = LightSurface
-val TulparLight = LightBg
-val TulparOnDark = LightFg
+val TulparDark = DarkBg
+val TulparDarkSurface = DarkSurface
+val TulparLight = DarkBg
+val TulparOnDark = DarkFg
 val TulparOnOrange = TulparOnLime
