@@ -311,20 +311,21 @@ private fun MapSelectionOverlay(
     onBack: () -> Unit,
 ) {
     val locationParams = if (userLat != null && userLng != null) "&lat=$userLat&lng=$userLng" else ""
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(TulparBlack)) {
         MapWebView(
             url = "$baseUrl/citymap?mode=$mode$locationParams",
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().statusBarsPadding(),
             onPointSelected = onPointSelected,
         )
 
-        // Кнопка назад поверх карты
+        // Кнопка назад поверх карты — учитываем status bar
         Box(
             modifier = Modifier
-                .padding(top = 48.dp, start = 16.dp)
-                .size(40.dp)
+                .statusBarsPadding()
+                .padding(start = 16.dp, top = 12.dp)
+                .size(44.dp)
                 .clip(CircleShape)
-                .background(TulparSurface.copy(alpha = 0.9f))
+                .background(TulparSurface)
                 .clickable(onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {
