@@ -1,5 +1,6 @@
 package kz.tulpartaxi.kandyagash.ui.theme
 
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -51,7 +52,11 @@ fun TulparTaxiTheme(
         MaterialTheme(
             colorScheme = scheme,
             typography = TulparTypography,
-            content = content,
-        )
+        ) {
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(fontFamily = Manrope),
+                content = content,
+            )
+        }
     }
 }
